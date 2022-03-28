@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
+	<title>test-1</title>
+	<link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+<body>
+	<style>
+		body {
+	font-family: 'Fredoka', sans-serif;
+	overflow-x: hidden;
+}
+section {
+	margin: 20px 10px;
+	padding: 10px;
+	 border: 20px solid transparent;
+  -moz-border-image: -moz-linear-gradient(top, #22D270 0%, #06B153 100%);
+  -webkit-border-image: -webkit-linear-gradient(top, #22D270 0%, #06B153 100%);
+  border-image: linear-gradient(to bottom, #22D270 0%, #06B153 100%);
+  border-image-slice: 1;
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+}
+label {
+	padding: 10px 0px;
+}
+span {
+	font-family: monospace;
+	font-size: 1.4em;
+	font-weight: bold;
+	color: #1F22FB;
+}
+button {
+	padding: 10px;
+	font-size: 20px;
+	border: none;
+	border-radius: 30px;
+	color: #fff;
+	font-family: 'Arial';
+	background: #0BB457;
+}
+	</style>
+	<section>
+		<img src="https://drive.google.com/uc?export=view&id=1vTPsyIVNsLgP8_SBk3pd2u83ZP-t4U_U" style="width: 400px; height: 320px; margin: auto;">
+		<label>List: <input id="listInput">
+		</label>
+
+		<label>r: <input id="rInput">
+		</label>
+
+		<label>Is Order important? <input type="checkbox" id="orderInput">
+		</label>
+
+		<label>Is Repetition allowed? <input type="checkbox" id="repetitionInput">
+		</label>
+
+		<label>Filter? <input type="checkbox" id="filterInput">
+		</label>&nbsp;&nbsp;&nbsp;&nbsp;
+
+		<button onclick="calc()">List Them</button>
+	</section>
+	
+	<section>
+		<div>
+			<h1 style="color: #1F22FB;">Answer is:-</h1>
+			<span style="color: #42FF99;">★</span> Doing operation <span id="operationSpan">*</span> where (n=<span id="nSpan">*</span>, r=<span id="rSpan">*</span>)
+		</div>
+		<div>
+			<span style="color: #42FF99;">★</span> Formula: <span id="operationFormulaSpan">*</span>
+		</div>
+		<div>
+			<span style="color: #42FF99;">★</span>Result has total <span id="totalEntriesSpan">*</span> entries with <span id="withDupEntriesSpan">*</span> duplicates
+		</div>
+		<div>
+			<span style="color: #42FF99;">★</span> Filtered <span id="filteredEntriesSpan">*</span> entries out of <span id="withoutDupEntriesSpan">*</span> non-duplicates
+		</div>
+		<div>
+			<span style="color: #42FF99;">★</span>FINALLY SHOWING <span id="shownEntriesSpan">*</span> ENTRIES
+		</div>
+		<div id="resultOutput"></div>
+	</section>
+
+<script type="text/javascript" src="https://unpkg.com/generatorics@1.1.0/generatorics.js"></script>
+<script>
+	const log = console.log.bind(console);
+const $ = document.querySelector.bind(document);
+
+const allowedEntries = `128,137,146,236,245,290,380,470,489,560,678,579,129,138,147,156,237,246,345,390,480,570,679,589,120,139,148,157,238,247,256,346,490,580,670,689,130,149,158,167,239,248,257,347,356,590,680,789,140,159,168,230,249,258,267,348,357,456,690,780,123,150,169,178,240,259,268,349,358,457,367,790,124,160,179,250,269,278,340,359,368,458,467,890,125,134,170,189,260,279,350,369,378,459,567,468,126,135,180,234,270,289,360,379,450,469,478,568,127,136,145,190,235,280,370,479,460,569,389,578,100,119,155,227,335,344,399,588,669,200,110,228,255,336,499,660,688,778,300,166,229,337,355,445,599,779,788,400,112,220,266,338,446,455,699,770,500,113,122,177,339,366,447,799,889,600,114,277,330,448,466,556,880,899,700,115,133,188,223,377,449,557,566,800,116,224,233,288,440,477,558,990,900,117,144,199,225,388,559,577,667`.split(",").reduce((acc, el) => {
+		acc.push(el.trim());
+		return acc;
+	}, []);
+
+function calc() {
+	let result;
+	let listInput = $("#listInput").value.split(',').filter(el => el !== "");
+	let rInput = Number($("#rInput").value);
+	let orderInput = $("#orderInput").checked;
+	let repetitionInput = $("#repetitionInput").checked;
+
+	localStorage.listInput = JSON.stringify(listInput);
+	localStorage.rInput = rInput;
+	localStorage.orderInput = orderInput;
+	localStorage.repetitionInput = repetitionInput;
+	localStorage.filterInput = $("#filterInput").checked;
+
+	$("#rSpan").innerText = rInput;
+	$("#nSpan").innerText = listInput.length;
+	if (orderInput) {
+		if (repetitionInput) {
+			result = permutationWithRepetition(listInput, rInput);
+			$("#operationSpan").innerText = "PERMUTATION-WITH-REPETITION";
+			$("#operationFormulaSpan").innerHTML = "n<sup>r</sup>";
+		}
+		else {
+			result = gen(`permutation`, listInput, rInput);
+			$("#operationSpan").innerText = "PERMUTATION";
+			$("#operationFormulaSpan").innerHTML = "<sup>n!</sup>&frasl;<sub>(n-r)!</sub>";
+		}
+	}
+	else {
+		if (repetitionInput) {
+			result = combinationWithRepetition(listInput, rInput);
+			$("#operationSpan").innerText = "COMBINATION-WITH-REPETITION";
+			$("#operationFormulaSpan").innerHTML = "<sup>(n+r-1)!</sup>&frasl;<sub>r!(n-1)!</sub>";
+		}
+		else {
+			result = gen(`combination`, listInput, rInput);
+			$("#operationSpan").innerText = "COMBINATION";
+			$("#operationFormulaSpan").innerHTML = "<sup>n!</sup>&frasl;<sub>r!(n-r)!</sub>";
+		}
+	}
+
+	result = result.reduce((acc, el) => {
+		acc.push(el.join(""));
+		return acc;
+	}, []);
+	let totalEntries = result.length;
+
+	result = [...new Set(result)];
+	let withoutDupEntries = result.length;
+
+	if ($("#filterInput").checked) {
+		result = result.reduce((acc, el) => {
+			if (allowedEntries.includes(el)) acc.push(el);
+			return acc;
+		}, []);
+	}
+	let filteredEntries = result.length;
+
+	$("#totalEntriesSpan").innerText = totalEntries;
+	$("#withDupEntriesSpan").innerText = totalEntries - withoutDupEntries;
+	$("#withoutDupEntriesSpan").innerText = withoutDupEntries;
+	$("#filteredEntriesSpan").innerText = withoutDupEntries - filteredEntries;
+	$("#shownEntriesSpan").innerText = filteredEntries;
+
+	$("#resultOutput").innerHTML = "";
+	result.forEach(el => {
+		let span = document.createElement("span");
+		span.innerText = `{${el}} `;
+		$("#resultOutput").append(span);
+	});
+}
+
+function gen(operation, list, r) {
+	let resultGenerator = G[operation](list, r);
+	let result = [];
+	let go = true;
+	do {
+		let next = resultGenerator.next().value;
+		if (next === undefined) {
+			go = false;
+		}
+		else {
+			result.push([...next]);
+		}
+	} while (go);
+	return result;
+}
+
+function combinationWithRepetition(list, r) {
+	let data = Array(r);
+	let results = [];
+	(function f(pos, start) {
+	  if(pos === r) {
+	    results.push(data.slice());
+	    return;
+	  }
+	  for(let i=start; i<list.length; ++i) {
+	    data[pos] = list[i];
+	    f(pos+1, i);
+	  }
+	})(0, 0);
+	return results;
+}
+
+function permutationWithRepetition(list, r) {
+  var holdingArr = [];
+  var recursiveFun = function(singleSolution) {
+      if (singleSolution.length > r-1) {
+        holdingArr.push(singleSolution);
+        return;
+      }
+      for (var i=0; i < list.length; i++) {
+        recursiveFun(singleSolution.concat([list[i]]));
+      }
+  };
+  recursiveFun([]);
+  return holdingArr;
+};
+</script>
+<script type="text/javascript">
+	if (localStorage.listInput) {
+		$("#listInput").value = JSON.parse(localStorage.listInput);
+		$("#rInput").value = localStorage.rInput;
+		$("#orderInput").checked = localStorage.orderInput === "true";
+		$("#repetitionInput").checked = localStorage.repetitionInput === "true";
+		$("#filterInput").checked = localStorage.filterInput === "true";
+	}
+	else {
+		$("#listInput").value = "0,1,2,3,4,5,6,7,8,9";
+		$("#rInput").value = 3;
+		$("#orderInput").checked = true;
+		$("#repetitionInput").checked = true;
+		$("#filterInput").checked = true;
+	}
+	calc();
+</script>
+</body>
+</html>
